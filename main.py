@@ -33,7 +33,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────── CONFIG ─────────────────────────────
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8513734965:AAE3Lg84TBsqqPtck-FRNGhVJC_ePleEs1k")
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "from_env")
 LM_STUDIO_BASE_URL = "http://127.0.0.1:1234/v1"
 
 client = AsyncOpenAI(
