@@ -1,112 +1,74 @@
-🐍 Solid Snake Codec Telegram Bot
+﻿# SolidSnakeBot
 
-“This is Snake. Do you read me, Commander?”
+Telegram bot that talks through a Solid Snake-style codec persona, uses LM Studio through an OpenAI-compatible API, can retrieve local notes with FAISS, and can fetch web or currency context for explicit requests.
 
-This is a feature-rich, locally-hosted Telegram bot powered by LM Studio and designed to roleplay as Solid Snake from the Metal Gear Solid series. Communicating over a simulated "codec channel," the bot features internet access, Retrieval-Augmented Generation (RAG) for custom knowledge, live currency tracking, and seamless handling of reasoning LLMs.
+## Features
 
-🌟 Features
+- Solid Snake-style codec persona loaded from `prompts/solid_snake.txt`.
+- Local LM Studio generation through the OpenAI-compatible `/v1` API.
+- Reasoning-model cleanup for empty content or `<think>...</think>` responses.
+- Optional RAG over `notes.txt` with `sentence-transformers` and FAISS.
+- Explicit DuckDuckGo web search through `/search <query>`.
+- Direct USD/EUR currency lookup from the Central Bank of Russia for currency questions.
+- Rolling per-user conversation history.
 
-Flawless Persona: Operates strictly under a detailed system prompt tailored to Solid Snake's voice, history, and philosophy. It never breaks character and explicitly avoids AI cliches.
+## Setup
 
-Local LLM Processing: Connects to LM Studio via the OpenAI Python SDK, ensuring complete privacy and zero API costs for message generation.
+1. Create and activate a virtual environment:
 
-Reasoning Model Support: Automatically detects and strips <think> blocks, allowing you to use advanced reasoning models (like DeepSeek-R1 or Qwen-based models) without breaking immersion.
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   ```
 
-Web Recon (DuckDuckGo): Can actively search the internet for current events, schedules, or specific queries, scraping page text to formulate tactical replies.
+2. Install dependencies:
 
-RAG Knowledge Base: Reads from a local notes.txt file. Uses sentence-transformers and faiss to semantically search your custom knowledge base and inject it into the prompt.
+   ```powershell
+   python -m pip install -r requirements.txt
+   ```
 
-Live Currency Feeds: Bypasses the LLM for instantaneous, raw data retrieval of USD/EUR exchange rates directly from the Central Bank of Russia (CBR) when requested.
+3. Copy `.env.example` to `.env` and set `TELEGRAM_BOT_TOKEN`.
 
-Contextual Memory: Maintains a rolling history of the last 12 message pairs per user.
+4. Start LM Studio with an OpenAI-compatible server at `http://127.0.0.1:1234/v1`, or update `LM_STUDIO_BASE_URL` in `.env`.
 
-🛠️ Prerequisites
+5. Run the bot:
 
-Python 3.10+
+   ```powershell
+   python main.py
+   ```
 
-Telegram Bot Token: Get one from @BotFather on Telegram.
+## Configuration
 
-LM Studio: Download and install from lmstudio.ai.
+All runtime settings are read from `.env` through `bot/config.py`.
 
-🚀 Setup & Installation
+- `TELEGRAM_BOT_TOKEN` is required.
+- `PROMPT_FILE` defaults to `prompts/solid_snake.txt`.
+- `KNOWLEDGE_BASE` defaults to `notes.txt`.
+- `MODEL_NAME_FALLBACK`, generation settings, web-search limits, and Telegram message limits can be adjusted in `.env`.
 
-1. Install Dependencies
+## Commands
 
-Install the required Python packages:
+- `/start` opens a new codec session.
+- `/help` shows the operational overview.
+- `/reset` clears conversation history for the current user.
+- `/quote` returns a Solid Snake quote.
+- `/search <query>` runs explicit DuckDuckGo web search and asks the local model to brief the result.
+- `/status` checks LM Studio and shows how many RAG chunks are loaded.
 
-pip install python-telegram-bot openai httpx faiss-cpu sentence-transformers
+## Verification
 
+Run syntax checks:
 
-(Note: If you are on an Apple Silicon Mac or have a dedicated GPU, you might want to configure standard or GPU-accelerated FAISS/PyTorch setups accordingly).
+```powershell
+python -m py_compile main.py bot\config.py bot\llm.py bot\rag.py bot\handlers\message.py bot\handlers\commands.py bot\handlers\search.py bot\services\web_search.py bot\services\currency.py bot\utils\text.py bot\utils\typing.py tests\test_refactor.py
+```
 
-2. Configure LM Studio
+Run the focused test suite:
 
-Open LM Studio and load your preferred model (e.g., gemma-2-9b-it, Llama-3, or a reasoning model).
+```powershell
+python -m unittest discover -s tests
+```
 
-Go to the Local Server tab.
+## Disclaimer
 
-Ensure the server is running on port 1234 (the default). The Base URL should be http://127.0.0.1:1234/v1.
-
-3. Setup the Knowledge Base (Optional)
-
-Create a file named notes.txt in the same directory as the bot script.
-Separate different chunks of knowledge with a double newline.
-
-The server goes down for maintenance every Tuesday at 03:00 AM.
-
-The password for the guest Wi-Fi is "FoxHound1998".
-
-The Commander prefers his coffee black, no sugar.
-
-
-If notes.txt is not found, the bot will boot normally with RAG disabled.
-
-4. Run the Bot
-
-Set your Telegram Bot token as an environment variable and run the script:
-
-Linux/macOS:
-
-export TELEGRAM_BOT_TOKEN="your_bot_token_here"
-python bot.py
-
-
-Windows (Command Prompt):
-
-set TELEGRAM_BOT_TOKEN=your_bot_token_here
-python bot.py
-
-
-(Note: If you don't set the environment variable, the script falls back to a hardcoded token for testing, but it is highly recommended to use your own).
-
-📡 Commands
-
-Send these over the Telegram chat to interact with the bot:
-
-/start — Open the codec channel and begin operations.
-
-/help — Get a tactical briefing on the bot's capabilities.
-
-/search <query> — Force a direct web sweep via DuckDuckGo.
-
-/memory — Inspect the currently loaded RAG knowledge chunks.
-
-/history — Replay recent transmissions (view rolling memory).
-
-/quote — Receive a random iconic quote from Snake.
-
-/reset — Wipe the current conversation history.
-
-/status — Check the connection to LM Studio and the loaded model.
-
-🧠 How it Works under the Hood
-
-Fast Pathing: Trivial questions (e.g., "What time is it?", "Who are you?") are intercepted with regex to provide instant answers without taxing the local LLM.
-
-Web Scraping: The bot uses httpx to ping DDG's HTML lite version. It extracts the URLs and snippets, and for the top 2 results, it briefly fetches the raw page text (up to 3000 chars) to feed the LLM.
-
-Typing Action Context: Wraps the entire generation process in an asynchronous background task that keeps the Telegram "typing..." indicator alive during long web scrapes or heavy local LLM generation.
-
-⚠️ Disclaimer
-
-This is a fan-made project. "Solid Snake", "Metal Gear", and related characters are properties of Konami. This software is provided "as is", without warranty of any kind.
+This is a fan-made project. Solid Snake, Metal Gear, and related characters are properties of Konami. This software is provided as is, without warranty of any kind.
